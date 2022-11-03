@@ -5,9 +5,11 @@ import { AppService } from './app.service';
 import { CategoriesController } from './products/categories/categories.controller';
 import { Category } from './products/categories/Category';
 import { ProductsModule } from './products/products.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [ProductsModule,
+  imports: [ProductsModule, AuthModule, UsersModule,
     /*TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
