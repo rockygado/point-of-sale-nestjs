@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AppRoles, roles } from 'src/authorization/nest-access-control/app.roles';
 import { UserService } from 'src/users/users.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 
@@ -16,11 +17,12 @@ export class AuthService {
 
  
   async login(user: any): Promise<{ access_token: string; } | {message:string}>  {
-    const ckeckUser = await this.checkUserInDB(user.email, user.password);
-    if (!ckeckUser) {
+    const checkedUser = await this.checkUserInDB(user.email, user.password);
+    if (!checkedUser) {
       return {message: "email or password incorrect"};
     }
-    return this.jwtStrategy.generateToken(ckeckUser)
+    checkedUser.roles = AppRoles.ADMIN;
+    return this.jwtStrategy.generateToken(checkedUser)
   }
 
   async checkUserInDB(email: string, pass: string): Promise<any> {
@@ -30,12 +32,5 @@ export class AuthService {
       return result;
     }
     return null;
-  }
-
-  async login(user: any) {
-    const payload = { username: user.username, sub: user.userId };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
   }
 }

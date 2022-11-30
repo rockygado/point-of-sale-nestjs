@@ -12,12 +12,12 @@ export class AuthController{
     constructor(private readonly authService: AuthService , private readonly jwtStrategy:JwtStrategy){}
 
     @Post('createAdmin')
-    async register(@Body() registerInfo:RegisterDto) { //: Promise<{ access_token: string; }>
+    async register(@Body() registerInfo:RegisterDto) {
       return this.authService.register(registerInfo);
     }
   
     @Post('login')
-    async login(@Body() loginInfo:LoginDto): Promise<{ access_token: string; } | {message:string}> { //@Request() req:any
+    async login(@Body() loginInfo:LoginDto): Promise<{ access_token: string; } | {message:string}> { 
       return this.authService.login(loginInfo);
     }
 

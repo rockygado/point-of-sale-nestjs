@@ -1,4 +1,4 @@
-import { RolesBuilder, UserRoles } from "nest-access-control";
+import { RolesBuilder } from "nest-access-control";
 
 export enum AppRoles {
     USER = 'user',
@@ -19,7 +19,3 @@ export enum AppRoles {
         .createAny('category')  // equivalent to .createOwn('video', ['*'])
         .updateAny('category')
         .deleteOwn('category')
-
-    //   .extend(UserRoles.USER_CREATE_ANY_VIDEO) // inherit role capabilities. also takes an array
-    //   .updateAny('video', ['title']) // explicitly defined attributes
-    //   .deleteAny('video');
