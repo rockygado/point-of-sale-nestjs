@@ -5,7 +5,12 @@ import * as winston from 'winston';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { Category } from './products/categories/Category';
+import { Category } from './categories/Category';
+import { CategoriesModule } from './categories/categories.module';
+import { Shift } from './shifts/Shift';
+import { ShiftsModule } from './shifts/shifts.module';
+import { User } from './users/user';
+import { UsersModule } from './users/users.module';
 import { Product } from './products/Product';
 import { ProductsModule } from './products/products.module';
 import { Shift } from './users/shifts/Shift';
@@ -47,7 +52,41 @@ import configuration from './config/config'
       ],
     }),
   ],
+import { Product } from './products/product';
+import { AuthModule } from './auth/auth.module';
+import { AccessControlModule } from 'nest-access-control';
+import { roles } from './authorization/nest-access-control/app.roles';
+// import { RolesGuard } from './authorization/RBAC/roles.guard';
+// import { AccessControlModule } from 'nest-access-control';
+// import { roles } from './authorization/nest-access-control/app.roles';
+
+const dbConnection = TypeOrmModule.forRoot({
+  type: 'mysql',
+  host: 'localhost',
+  port: 3307,
+  username: 'root',
+  password: 'darsh123',
+  database: 'PoS',
+  entities: [Category, Product, Shift, User],
+  synchronize: true,
+})
+   
+
+
+
+const nestAccess = AccessControlModule.forRoles(roles)
+
+@Module({
+  imports: [ 
+    dbConnection,
+    CategoriesModule,
+    ShiftsModule,
+    UsersModule,
+    ProductsModule,
+    AuthModule,
+    nestAccess    
+ ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService], //RolesGuard --- for testing authorization with RBAC
 })
 export class AppModule {}

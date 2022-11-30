@@ -1,53 +1,42 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Product } from "./Product";
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { PaginatedProductsResultDto } from './dto/paginated-products-result.dto';
+import { PaginationDto } from './dto/pagination.dto';
+import { ProductDto } from './dto/product.dto';
+import { ProductsService } from './products.service';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('products')
-export class ProductsController{
-
-    constructor(@InjectRepository(Product)
-    private productsRepository : Repository<Product>){}
-
-
-    /*@Get()
-    async GetAllProducts(){
-        
-
-        return this.productsRepository.find();
-    }*/
-    
-    @Get(":name")
-    GetProductByname(@Param() params : Product): Promise<Product>{
-        return this.productsRepository.findOneBy({name:params.name});
-    }
+export class ProductsController {
+    constructor(private productsService:ProductsService){}
 
     @Post()
-    async Create(@Body() newProduct: Product){
-        const existingProduct = await this.productsRepository.findOneBy({barcode: newProduct.barcode});
-        if(existingProduct){
-            console.warn("This product already exists");
-            return false;
-        }
-        else
-        await this.productsRepository.save(newProduct);
+    createProduct(@Body() newProduct:ProductDto){
+        return this.productsService.createProduct(newProduct)
     }
 
-    @Patch(":id")
-    async Update(@Param() params, @Body() updatedProduct: Product){
-        const oldProduct = await this.productsRepository.findOneBy({id: params.id});
-        if(oldProduct)
-        await this.productsRepository.save({id:oldProduct.id, ...updatedProduct});
-        
-        else
-        console.warn("This item does not exist!");
+    @Patch(':id')
+    updateProduct(@Param() param ,@Body() item){
+        return this.productsService.updateProduct(param.id, item)
     }
 
-    @Delete(":id")
-    async Delete(@Param() params){
-        const existingProduct = await this.productsRepository.findOneBy({id: params.id});
-        if(existingProduct)
-        await this.productsRepository.delete(existingProduct);
+    @Get(':id')
+    getProductById(@Param() param){       
+        return this.productsService.getProductById(param.id)
+        // return true
+    }
+
+    @Get()
+    getProducts(@Query() paginationDto: PaginationDto): Promise<PaginatedProductsResultDto>{
+        paginationDto.page = paginationDto.page == undefined ? paginationDto.page: 0;
+        paginationDto.pageSize = paginationDto.pageSize == undefined ? paginationDto.pageSize : 10;
+        paginationDto.page = Number(paginationDto.page);
+        paginationDto.pageSize = Number(paginationDto.pageSize);
+
+        return this.productsService.getProducts({
+            page: paginationDto.page, //  ...paginationDto
+            pageSize: paginationDto.pageSize > 100 ? 100 : paginationDto.pageSize
+          });
         
     }
 

@@ -1,16 +1,30 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
+import { UserService } from 'src/users/users.service';
+import { JwtStrategy } from './jwt/jwt.strategy';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService
-  ) {}
+  constructor (private userService: UserService, private jwtStrategy: JwtStrategy) {}
 
-  async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.findUserByEmail(username);
+  async register(user: any){
+    const checkUser = await this.userService.createUser(user)
+    if (checkUser.message == "already exists") {
+        return {message : "already exists"}
+    }
+    return checkUser
+  }
+
+ 
+  async login(user: any): Promise<{ access_token: string; } | {message:string}>  {
+    const ckeckUser = await this.checkUserInDB(user.email, user.password);
+    if (!ckeckUser) {
+      return {message: "email or password incorrect"};
+    }
+    return this.jwtStrategy.generateToken(ckeckUser)
+  }
+
+  async checkUserInDB(email: string, pass: string): Promise<any> {
+    const user = await this.userService.getByEmail(email);
     if (user && user.password === pass) {
       const { password, ...result } = user;
       return result;
@@ -19,12 +33,7 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const validUser = await this.validateUser(user.username , user.password)
-    if(!validUser)
-    {
-      throw new UnauthorizedException;
-    }
-    const payload = { username: validUser.email, sub: validUser.id };
+    const payload = { username: user.username, sub: user.userId };
     return {
       access_token: this.jwtService.sign(payload),
     };

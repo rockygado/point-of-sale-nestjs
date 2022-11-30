@@ -1,53 +1,55 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { User } from "./User";
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { ACGuard, UseRoles } from "nest-access-control";
+import { UserUpdate } from "./dto/user-update.dto";
+// import { Role } from "../authorization/RBAC/role.enum";
+// import { Roles } from "../authorization/RBAC/roles.decorator";
+// import { RolesGuard } from "../authorization/RBAC/roles.guard";
+import { User } from './user';
+import { UserService } from './users.service';
+
 
 @Controller('users')
-export class UsersController{
-    constructor(@InjectRepository(User)
-    private usersRepository : Repository<User>){}
-
-    @Get()
-    GetAllUsers(){
-        return this.usersRepository.find({
-            relations: {
-                shift: true,
-            },
-        });
-    }
+export class userController {
+    constructor(private userService:UserService){} 
 
     @Post()
-    async Create(@Body() newUser:User){
-        const existingUser = await this.usersRepository.findOneBy({email: newUser.email});
-        if(existingUser){
-            console.warn("This user already exists!");
-            return false;
-        }
-        await this.usersRepository.save(newUser);
-        //console.log(newUser.shifts[1]);
+    createUser(@Body() item:User){    
+        return this.userService.createUser(item)
     }
 
+    @UseGuards(AuthGuard('jwt'), ACGuard)
+    @UseRoles({
+      resource:  'product',
+      action:  'read',
+      possession:  'any',
+    })
+    @Get('test')
+    testNow(){
+        return "success"
+    }
+
+    @UseGuards(AuthGuard('jwt'))
     @Get(":id")
-    GetUserById(@Param() params){
-        return this.usersRepository.findOneBy({id : params.id});
+    getUserById(@Param() param){
+        return this.userService.getUserById(param.id)
     }
 
+    @UseGuards(AuthGuard('jwt'))
     @Patch(":id")
-    async Update(@Param() params, @Body() updatedUser: User){
-        const oldUser = await this.usersRepository.findOneBy({id: params.id});
-        if(!oldUser)
-        console.warn("This user does not exist!");
-
-        await this.usersRepository.save({id:oldUser.id, ...updatedUser});
+    updateUser(@Param() param , @Body() item:UserUpdate){
+        return this.userService.updateUser(param.id , item)
     }
 
-    @Delete(":id")
-    async Delete(@Param() params){
-        const existingUser = await this.usersRepository.findOneBy({id: params.id});
-        if(existingUser)
-        await this.usersRepository.delete(existingUser);
-        
-    }
-    
+
+  
+    /* // ---- Test Authurization with RBAC
+
+     @UseGuards(AuthGuard('jwt'), RolesGuard)
+     @Roles(Role.Admin)
+     @Get()
+     testAuthurizeByRBAC(){
+         return {message:'success'};
+     } */
+
 }
